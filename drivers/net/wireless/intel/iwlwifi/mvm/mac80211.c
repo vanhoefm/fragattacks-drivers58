@@ -759,7 +759,21 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 static void iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 			   struct ieee80211_sta *sta)
 {
-	if (likely(sta)) {
+	struct ieee80211_tx_info info;
+	int injected;
+
+	/**
+	 * Mathy: check the injected flag to see how it should be transmitted.
+	 * Due to our changes to mac80211/tx.c injected frames can still be
+	 * assigned a `sta` in mixed interface mode, hence why this is needed.
+	 * Note that iwl_mvm_tx_skb_non_sta required some additional patches
+	 * because in mixed mode, the hardware monitor interface seems to be
+	 * destroyed for some reason.
+	 */
+	memcpy(&info, skb->cb, sizeof(info));
+	injected = !!(info.flags & IEEE80211_TX_CTL_INJECTED);
+
+	if (likely(sta && !injected)) {
 		if (likely(iwl_mvm_tx_skb_sta(mvm, skb, sta) == 0))
 			return;
 	} else {

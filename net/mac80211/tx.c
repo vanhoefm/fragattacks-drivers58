@@ -2207,14 +2207,34 @@ bool ieee80211_parse_tx_radiotap(struct sk_buff *skb,
 	return true;
 }
 
+static struct cfg80211_chan_def * get_chandef(struct ieee80211_sub_if_data *sdata,
+					      struct ieee80211_local *local)
+{
+	struct ieee80211_chanctx_conf *chanctx_conf;
+	struct ieee80211_sub_if_data *tmp_sdata;
+
+	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
+	if (!chanctx_conf) {
+		tmp_sdata = rcu_dereference(local->monitor_sdata);
+		if (tmp_sdata)
+			chanctx_conf =
+				rcu_dereference(tmp_sdata->vif.chanctx_conf);
+	}
+
+	if (chanctx_conf)
+		return &chanctx_conf->def;
+	else if (!local->use_chanctx)
+		return &local->_oper_chandef;
+	return NULL;
+}
+
 netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 					 struct net_device *dev)
 {
 	struct ieee80211_local *local = wdev_priv(dev->ieee80211_ptr);
-	struct ieee80211_chanctx_conf *chanctx_conf;
 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_hdr *hdr;
-	struct ieee80211_sub_if_data *tmp_sdata, *sdata;
+	struct ieee80211_sub_if_data *tmp_sdata, *sdata, *first_sdata;
 	struct cfg80211_chan_def *chandef;
 	u16 len_rthdr;
 	int hdrlen;
@@ -2290,6 +2310,7 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 	 * don't use nl80211-based management TX/RX.
 	 */
 	sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+	first_sdata = NULL;
 
 	list_for_each_entry_rcu(tmp_sdata, &local->interfaces, list) {
 		if (!ieee80211_sdata_running(tmp_sdata))
@@ -2298,25 +2319,30 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 		    tmp_sdata->vif.type == NL80211_IFTYPE_AP_VLAN ||
 		    tmp_sdata->vif.type == NL80211_IFTYPE_WDS)
 			continue;
+		if (first_sdata == NULL)
+			first_sdata = tmp_sdata;
 		if (ether_addr_equal(tmp_sdata->vif.addr, hdr->addr2)) {
 			sdata = tmp_sdata;
 			break;
 		}
 	}
 
-	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
-	if (!chanctx_conf) {
-		tmp_sdata = rcu_dereference(local->monitor_sdata);
-		if (tmp_sdata)
-			chanctx_conf =
-				rcu_dereference(tmp_sdata->vif.chanctx_conf);
+	/*
+	 * Mathy: with Intel iwlwifi/iwlmvm it seems the chandef of the sdata
+	 * of the interface itself is invalid. This means that if addr2 of the
+	 * injected frame differs from the client address, the injected frame will
+	 * be dropped because the chandef is invalid. We avoid this by trying
+	 * to use the chandef of the first other sdata entry, *and* also injecting
+	 * the frame using this sdata (when using the chandef of first_sdata but
+	 * injecting using the normal sdata we experienced crashes).
+	 */
+	chandef = get_chandef(sdata, local);
+	if (!chandef) {
+		sdata = first_sdata;
+		chandef = get_chandef(sdata, local);
 	}
 
-	if (chanctx_conf)
-		chandef = &chanctx_conf->def;
-	else if (!local->use_chanctx)
-		chandef = &local->_oper_chandef;
-	else
+	if (!chandef)
 		goto fail_rcu;
 
 	/*

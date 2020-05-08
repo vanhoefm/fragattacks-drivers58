@@ -718,11 +718,13 @@ int iwl_mvm_tx_skb_non_sta(struct iwl_mvm *mvm, struct sk_buff *skb)
 	bool offchannel = IEEE80211_SKB_CB(skb)->flags &
 		IEEE80211_TX_CTL_TX_OFFCHAN;
 	int queue = -1;
+	int injected;
 
 	if (IWL_MVM_NON_TRANSMITTING_AP && ieee80211_is_probe_resp(fc))
 		return -1;
 
 	memcpy(&info, skb->cb, sizeof(info));
+	injected = !!(info.flags & IEEE80211_TX_CTL_INJECTED);
 
 	if (WARN_ON_ONCE(skb->len > IEEE80211_MAX_DATA_LEN + hdrlen))
 		return -1;
@@ -761,8 +763,38 @@ int iwl_mvm_tx_skb_non_sta(struct iwl_mvm *mvm, struct sk_buff *skb)
 		}
 	}
 
+	/**
+	 * Mathy: due to our changes in mac80211/tx.c, in mixed mode frames are injected
+	 * on the normal station interface. And likely due to design decision in the
+	 * Intel driver, the mvm->snif_queue and mvm->snif_sta.sta_id is invalid. So for
+	 * injected frames, we need special care. Note that both a valid sta_id and
+	 * queue is essential. When in station mode, we pick sta_id of zero, because I
+	 * couldn't find a good source of a valid station id (it's a hack but works).
+	 */
+	if (injected && info.control.vif) {
+		struct iwl_mvm_vif *mvmvif =
+			iwl_mvm_vif_from_mac80211(info.control.vif);
+
+		if (info.control.vif && info.control.vif->type == NL80211_IFTYPE_MONITOR) {
+			queue = IWL_MVM_DQA_INJECT_MONITOR_QUEUE;
+			sta_id = mvm->snif_sta.sta_id;
+		} else if (info.control.vif && info.control.vif->type == NL80211_IFTYPE_AP) {
+			queue = IWL_MVM_DQA_GCAST_QUEUE;
+			sta_id = mvmvif->bcast_sta.sta_id;
+		} else if (info.control.vif->type == NL80211_IFTYPE_STATION) {
+			/*
+			 * The IWL_MVM_DQA_MIN_MGMT_QUEUE queue worked on both
+			 * the 8265 and 3160. The IWL_MVM_DQA_BSS_CLIENT_QUEUE
+			 * only worked with the 8265 card.
+			 */
+			sta_id = 0;
+			queue = IWL_MVM_DQA_MIN_MGMT_QUEUE;
+		}
+	}
+
 	if (queue < 0) {
 		IWL_ERR(mvm, "No queue was found. Dropping TX\n");
+		printk(KERN_WARNING "%s: No queue was found. Dropping TX\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -1139,6 +1171,7 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 	WARN_ON_ONCE(info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM);
 
 	if (WARN_ONCE(txq_id == IWL_MVM_INVALID_QUEUE, "Invalid TXQ id")) {
+		printk(KERN_WARNING "%s: invalid queue (tid=%d)\n", __FUNCTION__, tid);
 		iwl_trans_free_tx_cmd(mvm->trans, dev_cmd);
 		spin_unlock(&mvmsta->lock);
 		return -1;
