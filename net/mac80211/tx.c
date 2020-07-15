@@ -2345,6 +2345,7 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 	if (!chandef)
 		goto fail_rcu;
 
+#if 0
 	/*
 	 * Frame injection is not allowed if beaconing is not allowed
 	 * or if we need radar detection. Beaconing is usually not allowed when
@@ -2362,8 +2363,11 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 	 * monitor flag interfaces used for AP support.
 	 */
 	if (!cfg80211_reg_can_beacon(local->hw.wiphy, chandef,
-				     sdata->vif.type))
+				     sdata->vif.type)) {
+		printk(">>> %s: cfg80211_reg_can_beacon failed\n", __FUNCTION__);
 		goto fail_rcu;
+	}
+#endif
 
 	info->band = chandef->chan->band;
 
