@@ -11,6 +11,7 @@ Kconfig.versions
 *.cmd
 *.tmp
 *.ver
+*.mod
 modules.order
 backport-include/backport/autoconf.h
 modules
@@ -18,3 +19,5 @@ modules
 Module.symvers
 *.mod.c
 .cache.mk
+kconf/zconf.tab.c
+kconf/zconf.lex.c
