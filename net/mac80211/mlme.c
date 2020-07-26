@@ -52,6 +52,11 @@ module_param(max_probe_tries, int, 0644);
 MODULE_PARM_DESC(max_probe_tries,
 		 "Maximum probe tries before disconnecting (reason 4).");
 
+static int fragattack_version = 1;
+module_param(fragattack_version, int, 0644);
+MODULE_PARM_DESC(fragattack_version,
+		 "Version of the modified drivers for fragmentation and aggregation attacks.");
+
 /*
  * Beacon loss timeout is calculated as N frames times the
  * advertised beacon interval.  This may need to be somewhat

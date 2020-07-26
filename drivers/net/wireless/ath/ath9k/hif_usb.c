@@ -1026,6 +1026,9 @@ static int ath9k_hif_usb_download_fw(struct hif_device_usb *hif_dev)
 	if (!buf)
 		return -ENOMEM;
 
+	/* Track whether loaded firmware was modified for fragattacks */
+	htc_fragattack_fw = strncmp(hif_dev->fw_data, "_FRAGAT", 7) == 0;
+
 	while (len) {
 		transfer = min_t(size_t, len, 4096);
 		memcpy(buf, data, transfer);

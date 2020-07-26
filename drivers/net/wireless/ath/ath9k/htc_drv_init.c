@@ -42,6 +42,10 @@ int htc_use_dev_fw = 0;
 module_param_named(use_dev_fw, htc_use_dev_fw, int, 0444);
 MODULE_PARM_DESC(use_dev_fw, "Use development FW version");
 
+int htc_fragattack_fw = 0;
+module_param_named(fragattack_fw, htc_fragattack_fw, int, 0444);
+MODULE_PARM_DESC(fragattack_fw, "Latest uploaded firmware was modified");
+
 #ifdef CPTCFG_MAC80211_LEDS
 int ath9k_htc_led_blink = 1;
 module_param_named(blink, ath9k_htc_led_blink, int, 0444);

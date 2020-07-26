@@ -37,6 +37,7 @@
 			"." __stringify(FIRMWARE_MINOR_IDX_MAX) ".0.fw"
 
 extern int htc_use_dev_fw;
+extern int htc_fragattack_fw;
 
 #define IS_AR7010_DEVICE(_v) (((_v) == AR9280_USB) || ((_v) == AR9287_USB))
 
