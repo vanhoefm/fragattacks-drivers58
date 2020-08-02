@@ -67,6 +67,7 @@
 #include <linux/sched.h>
 #include <net/ip6_checksum.h>
 #include <net/tso.h>
+#include <net/mac80211.h>
 
 #include "iwl-debug.h"
 #include "iwl-csr.h"
@@ -2316,6 +2317,7 @@ int iwl_trans_pcie_tx(struct iwl_trans *trans, struct sk_buff *skb,
 		      struct iwl_device_tx_cmd *dev_cmd, int txq_id)
 {
 	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_hdr *hdr;
 	struct iwl_tx_cmd *tx_cmd = (struct iwl_tx_cmd *)dev_cmd->payload;
 	struct iwl_cmd_meta *out_meta;
@@ -2424,7 +2426,8 @@ int iwl_trans_pcie_tx(struct iwl_trans *trans, struct sk_buff *skb,
 	/* do not align A-MSDU to dword as the subframe header aligns it */
 	amsdu = ieee80211_is_data_qos(fc) &&
 		(*ieee80211_get_qos_ctl(hdr) &
-		 IEEE80211_QOS_CTL_A_MSDU_PRESENT);
+		 IEEE80211_QOS_CTL_A_MSDU_PRESENT) &&
+		!(info->flags & IEEE80211_TX_CTL_INJECTED);
 	if (trans_pcie->sw_csum_tx || !amsdu) {
 		tb1_len = ALIGN(len, 4);
 		/* Tell NIC about any 2-byte padding after MAC header */
