@@ -52,8 +52,8 @@ module_param(max_probe_tries, int, 0644);
 MODULE_PARM_DESC(max_probe_tries,
 		 "Maximum probe tries before disconnecting (reason 4).");
 
-static int fragattack_version = 1;
-module_param(fragattack_version, int, 0644);
+static char fragattack_version[] = "1.3";
+module_param_string(fragattack_version, fragattack_version, sizeof(fragattack_version), S_IRUGO);
 MODULE_PARM_DESC(fragattack_version,
 		 "Version of the modified drivers for fragmentation and aggregation attacks.");
 
