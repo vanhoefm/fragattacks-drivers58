@@ -730,7 +730,16 @@ static void ath9k_set_hw_capab(struct ath9k_htc_priv *priv,
 	ieee80211_hw_set(hw, HAS_RATE_CONTROL);
 	ieee80211_hw_set(hw, SPECTRUM_MGMT);
 	ieee80211_hw_set(hw, SIGNAL_DBM);
-	ieee80211_hw_set(hw, AMPDU_AGGREGATION);
+	/**
+	 * When using 802.11n the TL-WN722N dongle was unable to properly
+	 * inject fragmented frames. This can be solved in the firmware by
+	 * always calling ath_tgt_handle_normal in tgt_HTCRecvMessageHandler
+	 * (instead of also ath_tgt_handle_aggr). However, that feels like
+	 * an ugly solution. Instead we pretend that the device doesn't support
+	 * the transmission of A-MPDUs. That allows us to properly inject
+	 * aggregated frames even when using 802.11n.
+	 */
+	//ieee80211_hw_set(hw, AMPDU_AGGREGATION);
 	ieee80211_hw_set(hw, DOESNT_SUPPORT_QOS_NDP);
 
 	if (ath9k_ps_enable)
