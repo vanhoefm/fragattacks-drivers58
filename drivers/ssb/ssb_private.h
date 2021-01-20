@@ -9,6 +9,9 @@
 #include <linux/types.h>
 #include <linux/bcm47xx_wdt.h>
 
+#ifndef uninitialized_var
+#define uninitialized_var(x) x = x
+#endif
 
 /* pci.c */
 #ifdef CPTCFG_SSB_PCIHOST

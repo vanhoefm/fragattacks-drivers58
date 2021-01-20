@@ -697,9 +697,16 @@ bool qtnf_netdev_is_qtn(const struct net_device *ndev)
 	return ndev->netdev_ops == &qtnf_netdev_ops;
 }
 
+#if LINUX_VERSION_IS_GEQ(5,9,0)
+static int qtnf_check_br_ports(struct net_device *dev,
+			       struct netdev_nested_priv *priv)
+{
+	struct net_device *ndev = (struct net_device *)priv->data;
+#else
 static int qtnf_check_br_ports(struct net_device *dev, void *data)
 {
 	struct net_device *ndev = data;
+#endif
 
 	if (dev != ndev && netdev_port_same_parent_id(dev, ndev))
 		return -ENOTSUPP;
@@ -712,6 +719,11 @@ static int qtnf_core_netdevice_event(struct notifier_block *nb,
 {
 	struct net_device *ndev = netdev_notifier_info_to_dev(ptr);
 	const struct netdev_notifier_changeupper_info *info;
+#if LINUX_VERSION_IS_GEQ(5,9,0)
+	struct netdev_nested_priv priv = {
+		.data = (void *)ndev,
+	};
+#endif
 	struct net_device *brdev;
 	struct qtnf_vif *vif;
 	struct qtnf_bus *bus;
@@ -751,7 +763,11 @@ static int qtnf_core_netdevice_event(struct notifier_block *nb,
 		} else {
 			ret = netdev_walk_all_lower_dev(brdev,
 							qtnf_check_br_ports,
+#if LINUX_VERSION_IS_GEQ(5,9,0)
+							&priv);
+#else
 							ndev);
+#endif
 		}
 
 		break;

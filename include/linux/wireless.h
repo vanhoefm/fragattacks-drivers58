@@ -12,6 +12,10 @@
 
 #include <uapi/linux/wireless.h>
 
+#ifndef uninitialized_var
+#define uninitialized_var(x) x = x
+#endif
+
 #ifdef CONFIG_COMPAT
 
 #include <linux/compat.h>

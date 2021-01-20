@@ -23,6 +23,10 @@
 #include <net/regulatory.h>
 #include <net/netlink.h>
 
+#ifndef uninitialized_var
+#define uninitialized_var(x) x = x
+#endif
+
 /**
  * DOC: Introduction
  *
