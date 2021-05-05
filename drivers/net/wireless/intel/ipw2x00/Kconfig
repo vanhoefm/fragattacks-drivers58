@@ -165,12 +165,12 @@ config LIBIPW
 	depends on WIRELESS_EXT
 	depends on WEXT_SPY
 	depends on CRYPTO
-	depends on CRYPTO_ARC4
 	depends on CRYPTO_ECB
 	depends on CRYPTO_AES
 	depends on CRYPTO_MICHAEL_MIC
 	depends on CRYPTO_ECB
 	depends on CRC32
+	select CRYPTO_ARC4
 	select LIB80211
 	select LIB80211_CRYPT_WEP
 	select LIB80211_CRYPT_TKIP
