@@ -897,7 +897,9 @@ static void wil_rx_handle_eapol(struct wil6210_vif *vif, struct sk_buff *skb)
 void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 		  struct wil_net_stats *stats, bool gro)
 {
+#if LINUX_VERSION_IS_LESS(5,12,0)
 	gro_result_t rc = GRO_NORMAL;
+#endif
 	struct wil6210_vif *vif = ndev_to_vif(ndev);
 	struct wil6210_priv *wil = ndev_to_wil(ndev);
 	struct wireless_dev *wdev = vif_to_wdev(vif);
@@ -908,6 +910,7 @@ void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 	 */
 	int mcast = is_multicast_ether_addr(da);
 	struct sk_buff *xmit_skb = NULL;
+#if LINUX_VERSION_IS_LESS(5,12,0)
 	static const char * const gro_res_str[] = {
 		[GRO_MERGED]		= "GRO_MERGED",
 		[GRO_MERGED_FREE]	= "GRO_MERGED_FREE",
@@ -918,14 +921,22 @@ void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 		[GRO_CONSUMED]		= "GRO_CONSUMED",
 #endif /* > 4.11 */
 	};
+#endif /* < 5.12 */
 
 	if (wdev->iftype == NL80211_IFTYPE_STATION) {
 		sa = wil_skb_get_sa(skb);
 		if (mcast && ether_addr_equal(sa, ndev->dev_addr)) {
+#if LINUX_VERSION_IS_LESS(5,12,0)
 			/* mcast packet looped back to us */
 			rc = GRO_DROP;
 			dev_kfree_skb(skb);
 			goto stats;
+#else
+			ndev->stats.rx_dropped++;
+			stats->rx_dropped++;
+			wil_dbg_txrx(wil, "Rx drop %d bytes\n", len);
+			return;
+#endif
 		}
 	} else if (wdev->iftype == NL80211_IFTYPE_AP && !vif->ap_isolate) {
 		if (mcast) {
@@ -968,6 +979,7 @@ void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 		if (skb->protocol == cpu_to_be16(ETH_P_PAE))
 			wil_rx_handle_eapol(vif, skb);
 
+#if LINUX_VERSION_IS_LESS(5,12,0)
 		if (gro)
 			rc = napi_gro_receive(&wil->napi_rx, skb);
 		else
@@ -989,6 +1001,19 @@ stats:
 		if (mcast)
 			ndev->stats.multicast++;
 	}
+#else
+		if (gro)
+			napi_gro_receive(&wil->napi_rx, skb);
+		else
+			netif_rx_ni(skb);
+	}
+	ndev->stats.rx_packets++;
+	stats->rx_packets++;
+	ndev->stats.rx_bytes += len;
+	stats->rx_bytes += len;
+	if (mcast)
+		ndev->stats.multicast++;
+#endif
 }
 
 void wil_netif_rx_any(struct sk_buff *skb, struct net_device *ndev)
