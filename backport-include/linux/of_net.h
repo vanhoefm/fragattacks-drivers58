@@ -16,6 +16,7 @@ static inline const void *of_get_mac_address(struct device_node *np)
  * returns an error code and not NULL in case of an error.
  */
 #if LINUX_VERSION_IS_LESS(5,2,0)
+
 static inline const void *backport_of_get_mac_address(struct device_node *np)
 {
 	const void *mac = of_get_mac_address(np);
@@ -26,6 +27,21 @@ static inline const void *backport_of_get_mac_address(struct device_node *np)
 	return mac;
 }
 #define of_get_mac_address LINUX_BACKPORT(of_get_mac_address)
-#endif /* < 5.2 */
+
+#elif LINUX_VERSION_IS_GEQ(5,13,0)
+
+static inline const void *backport_of_get_mac_address(struct device_node *np)
+{
+	static u8 tmpmac[ETH_ALEN];
+	int retval = of_get_mac_address(np, tmpmac);
+
+	if (!retval)
+		return tmpmac;
+	else
+		return ERR_PTR(-ENODEV);
+}
+#define of_get_mac_address LINUX_BACKPORT(of_get_mac_address)
+
+#endif /* >= 5.13 */
 
 #endif /* _BP_OF_NET_H */

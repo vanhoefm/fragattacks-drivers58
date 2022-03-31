@@ -111,6 +111,13 @@ void backport_thermal_zone_device_unregister(struct thermal_zone_device *);
 
 #endif /* LINUX_VERSION_IS_LESS(4,3,0) */
 #endif /* ! < 3.8.0 */
+
+#if LINUX_VERSION_IS_GEQ(5,13,0)
+static inline void thermal_notify_framework(struct thermal_zone_device *tz,
+	int trip)
+{ }
+#endif
+
 #endif /* CONFIG_THERMAL */
 
 #endif /* __BACKPORT_LINUX_THERMAL_H */
