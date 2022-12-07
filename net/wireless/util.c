@@ -117,8 +117,20 @@ int ieee80211_freq_khz_to_channel(u32 freq)
 	/* see 802.11 17.3.8.3.2 and Annex J */
 	if (freq == 2484)
 		return 14;
-	else if (freq < 2484)
-		return (freq - 2407) / 5;
+	else if (freq == 2414)
+		return 6;
+	else if (freq == 2424)
+		return 10;
+	else if (freq == 2434)
+		return 14;
+	else if (freq == 2444)
+		return 18;
+	else if (freq == 2454)
+		return 22;
+	else if (freq == 2464)
+		return 26;
+	else if (freq == 2474)
+		return 30;
 	else if (freq >= 4910 && freq <= 4980)
 		return (freq - 4000) / 5;
 	else if (freq < 5945)
