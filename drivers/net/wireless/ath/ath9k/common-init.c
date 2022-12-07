@@ -22,7 +22,7 @@
 	.band = NL80211_BAND_2GHZ, \
 	.center_freq = (_freq), \
 	.hw_value = (_idx), \
-	.max_power = 20, \
+	.max_power = 30, \
 }
 
 #define CHAN5G(_freq, _idx) { \
@@ -37,20 +37,20 @@
  * we have calibration data for all cards though to make
  * this static */
 static const struct ieee80211_channel ath9k_2ghz_chantable[] = {
-	CHAN2G(2412, 0), /* Channel 1 */
-	CHAN2G(2417, 1), /* Channel 2 */
-	CHAN2G(2422, 2), /* Channel 3 */
-	CHAN2G(2427, 3), /* Channel 4 */
-	CHAN2G(2432, 4), /* Channel 5 */
-	CHAN2G(2437, 5), /* Channel 6 */
-	CHAN2G(2442, 6), /* Channel 7 */
-	CHAN2G(2447, 7), /* Channel 8 */
-	CHAN2G(2452, 8), /* Channel 9 */
-	CHAN2G(2457, 9), /* Channel 10 */
-	CHAN2G(2462, 10), /* Channel 11 */
-	CHAN2G(2467, 11), /* Channel 12 */
-	CHAN2G(2472, 12), /* Channel 13 */
-	CHAN2G(2484, 13), /* Channel 14 */
+	CHAN2G(2414, 0), /* Channel 1 */
+	CHAN2G(2419, 1), /* Channel 2 */
+	CHAN2G(2424, 2), /* Channel 3 */
+	CHAN2G(2429, 3), /* Channel 4 */
+	CHAN2G(2434, 4), /* Channel 5 */
+	CHAN2G(2439, 5), /* Channel 6 */
+	CHAN2G(2444, 6), /* Channel 7 */
+	CHAN2G(2449, 7), /* Channel 8 */
+	CHAN2G(2454, 8), /* Channel 9 */
+	CHAN2G(2459, 9), /* Channel 10 */
+	CHAN2G(2464, 10), /* Channel 11 */
+	CHAN2G(2469, 11), /* Channel 12 */
+	CHAN2G(2474, 12), /* Channel 13 */
+	CHAN2G(2489, 13), /* Channel 14 */
 };
 
 /* Some 5 GHz radios are actually tunable on XXXX-YYYY
