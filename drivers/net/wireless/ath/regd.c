@@ -33,7 +33,7 @@ static int __ath_regd_init(struct ath_regulatory *reg);
  */
 
 /* Only these channels all allow active scan on all world regulatory domains */
-#define ATH_2GHZ_CH01_11	REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
+#define ATH_2GHZ_CH01_11	REG_RULE(2414-10, 2462+10, 40, 0, 20, 0)
 
 /* We enable active scan on these a case by case basis by regulatory domain */
 #define ATH_2GHZ_CH12_13	REG_RULE(2467-10, 2472+10, 40, 0, 20,\
