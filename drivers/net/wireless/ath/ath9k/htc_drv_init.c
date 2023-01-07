@@ -737,7 +737,17 @@ static void ath9k_set_hw_capab(struct ath9k_htc_priv *priv,
 	 * (instead of also ath_tgt_handle_aggr). However, that feels like
 	 * an ugly solution. Instead we pretend that the device doesn't support
 	 * the transmission of A-MPDUs. That allows us to properly inject
-	 * aggregated frames even when using 802.11n.
+	 * fragmented frames even when using 802.11n.
+	 *
+	 * Update Jan 2023: the issue of not being able to properly inject
+	 * fragmented frames was due to the usage of Block Acks. The TL-WN722N
+	 * would start a Block Ack before sending the first fragment, and then
+	 * not send the second fragment (in the test "ping I,E,E" as client).
+	 * By not advertising AMPDU_AGGREGATION the usage of Block Acks is
+	 * avoided for this driver/device.
+	 * The issue of Block Acks also happens on the AWUS036ACM and RT5572.
+	 * Exactly when the Block Ack is sent depends, but for these devices
+	 * it also interferes with the injection of fragmented frames.
 	 */
 	//ieee80211_hw_set(hw, AMPDU_AGGREGATION);
 	ieee80211_hw_set(hw, DOESNT_SUPPORT_QOS_NDP);
